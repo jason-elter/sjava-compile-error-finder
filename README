@@ -1,20 +1,19 @@
 jason.elter
 
 
-
-
 =============================
 =      File description     =
 =============================
-The files in this exercise: 
-package oop.ex6.main: 
+A program that reads SJava files (simplified form of Java) and finds compile-time errors.
+Files: 
+package main: 
 #SJavac.java - Checks if an SJava file has any errors.
 #SJavaFormatException.java - Exception that represents a problem with the format 
 	of an S-Java file.
 #FilteredTrimmedReader.java - A Reader decorator that gets a buffered reader that filters 
 	single-line comments and whitespace-only lines and returns trimmed lines.
 #Variable.java - Represents a variable in an SJava file.
-package oop.ex6.blocks: 
+package blocks: 
 #Block.java - Abstract class that represents a block of code in an SJava file.
 #GlobalBlock.java - Represents the outermost block in an SJava file.
 #LocalBlock.java - Abstract class that represents an inner block in an SJava file.
