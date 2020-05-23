@@ -1,0 +1,152 @@
+jason.elter
+
+
+
+
+=============================
+=      File description     =
+=============================
+The files in this exercise: 
+package oop.ex6.main: 
+#SJavac.java - Checks if an SJava file has any errors.
+#SJavaFormatException.java - Exception that represents a problem with the format 
+	of an S-Java file.
+#FilteredTrimmedReader.java - A Reader decorator that gets a buffered reader that filters 
+	single-line comments and whitespace-only lines and returns trimmed lines.
+#Variable.java - Represents a variable in an SJava file.
+package oop.ex6.blocks: 
+#Block.java - Abstract class that represents a block of code in an SJava file.
+#GlobalBlock.java - Represents the outermost block in an SJava file.
+#LocalBlock.java - Abstract class that represents an inner block in an SJava file.
+#Method.java - Represents a method in an SJava file.
+#SubBlock.java - Represents an if or while block in an SJava file.
+
+=============================
+=          Design           =
+=============================
+#I decided to create a Reader decorator in my program. 
+	This decorator would filter out any comment lines or any line that only contained
+	white-spaces. It also handled detecting any comment lines with spaces at the 
+	beginning of the line. This decorator also trimmed all the lines it read which
+	simplified handling lines in the rest of the program.
+	Doing this ruled out the alternative which is dealing with comment lines and
+	empty or whitespace-only lines in the rest of the program. It also ruled out
+	checking for preceding or following white-spaces in the rest of the program.
+#I decided to have both if and while blocks as the same class (SubClass).
+	The reasoning behind this is that the only difference when checking these blocks 
+	is whether the block starts with "if" or with "while".
+	An alternative I considered to use was to have an abstract superclass and
+	create two subclass that each would represent if and while. This would also work
+	but it would require 3 classes and a lot of code for the a one word difference.
+	This prevented a lot of unnecessary code.
+#I decided to use HashMaps for saving variables and methods in a block (when needed)
+	so that I could easily find a Variable or Method object by its name.
+	This is better than keeping a list, which I would have to iterate through till I
+	found the correct Object (O(n)) compared to a HashMap (O(1) usually).
+#I decided when reading to first go through the whole file and only define variables
+	and saving methods (while also checking their definition) to a HashMap.
+	After this each method's content is checked.  This is done by saving a list of
+	lines to each method object and calling a readMethod() function later.
+	This way the order of the file isn't important since all global variables have 
+	already been defined by the time we check the contents of all of the methods' 
+	contents.
+#For SubBlocks (if or while) I decided to have the source of the lines to read to
+	be the iterator of the parent method's list of lines. This way recursively 
+	creating new inner SubBlocks is done with the same iterator. Each SubBlock
+	knows when to create a new SubBlock and to detect the end of the SubBlock
+	(according to the '{' and '}' characters).
+	The alternative to this would be to copy parts of the method's list into 
+	new lists and to read those but this would create a lot unnecessary lists.
+
+=============================
+=      Design questions     =
+=============================
+1. To add a new variable type I would have to do a couple of things.
+First, I would have to add the name of this type as a type name to the regular
+expressions that I use to detect variable definitions. I would also have to create
+a regular expression and pattern that would be able to detect a value of that
+type and add it with the type name to the Pattern factory in the Variable class.
+Overall it would be very easy to add a new variable type to my program.
+2. I chose the following two features:
+	a. Different method types.
+	Since methods can only be created in the GlobalBlock and I use the '{' 
+	character to identify the definition of a new method I wouldn't have to 
+	change that. I would have to change the regular expression that is used in 
+	checking a method's definition so that it groups the type and change that	
+	part to the following format: "(void|int|String|...)".
+	I would also have to add to the regular expression that I use for detecting
+	a group for the value part and then add a method in Variable that would
+	receive a type and a value and would throw an exception if the value isn't
+	of that type. In case of void method I would check that that group is empty, 
+	otherwise I would call the method.
+	b. Inheritage of files.
+	I would have to add a regular expression that would check the first line for
+	"extends someFileName" and group the name of the file (allowing 
+	whitespace-only or comment lines to appear before). This would be done in 
+	GlobalBlock. Afterwards I would read and check the other file for errors
+	(has to be in same directory). If the file was found and is valid, I keep a
+	reference to a GlobalBlock from the super-class (Luckily my program is 
+	designed so it is possible to have more than one instance of GlobalBlock). 
+	I would add to  the regular expression for identifying method calls 
+	this beginning: "(super.)?"- this way I could save in a boolean whether 
+	super was in the call. I would edit the method callMethod in GlobalBlock 
+	to also take a boolean denoting whether the call was preceded by super. 
+	I would also add to this method that if the reference to a super-class 
+	isn't null and if a method wasn't found then call callMethod in the
+	super-class reference with the same name. If the boolean for super is 
+	true it would call the super-class's callMethod if the reference isn't null.
+	Otherwise, it would throw a SJavaFormatException.
+	This would allow all the requirements.
+	
+=============================
+=       Error handling      =
+=============================
+There are three main exceptions that I used in this exercise:
+	1. IOException - denotes a general problem with reading the file.
+	2. FileNotFoundException - indicates that the file was not found in the given path.
+	3. SJavaFormatException - denotes a problem with the format of the file.
+The first two are thrown by the Reader and are caught in the main function, which then 
+prints an appropriate message to System.err and prints the number 2 to System.out.
+Almost every class and function throws an SJavaFormatException. It's thrown as soon 
+as a format issue has been detected with the file. By replacing what could've been
+many boolean functions that check validity by returning true or false with void 
+functions that throw a format exception, I can collapse all the way back to the main
+function as soon as a format problem has been detected. If the main function catches
+a format error then 1 is printed to System.out.
+Any place that this exception is thrown there is documentation regarding the reason 
+to throw it, if the reason isn't clear. (During debugging printing the exception's
+stack trace will reveal where it was thrown so we can check for the reason)
+	
+=============================
+=    Regular expressions    =
+=============================
+(Notice: in my program some lines are trimmed before handling and my regular 
+expressions are written accordingly)
+I've decided to talk about the following two regular expressions from my program:
+	1. The one I use for checking a method definition:
+	void\s+([a-zA-Z]\w*)\s*\(([^)]*)\)\s*\{
+	As you can see, first I ensure that the expression starts with "void" followed by
+	at least one whitespace. Then I group the name (which starts with a letter and is 
+	optionally followed by any number of word characters) optionally followed 
+	by white-spaces. Then followed by the '(' character. Then I group all following 
+	characters till I reach the ')' character, optionally followed by white-spaces.
+	The expression ends with the '{' character.
+	2. The one I use for Variable definition (not the one I use for variables 
+	in method definition):
+	This expression has two parts:
+		a. (final\s+)?(int|String|boolean|double|char)\s+
+		b. ([a-zA-Z_]\w*)(\s*=\s*([^;,]+))?(?:;|,\s*([^;\s]+)\s*;)
+	When reading a new line and interpreting variable/s from it both parts are 
+	concatenated. First there is an optional group that checks for the word "final" 
+	followed by at least one whitespace. Then it checks for in a group for a valid
+	type and then it checks for at least one whitespace. Then in a group we check
+	for a valid name (the invalid case of the name being just and underscore is 
+	accepted here but is throws an error later in th program). Then there is an
+	optional group that contains optional white-spaces, followed with a '=' 
+	character and more white-spaces. Then a group that will contain the variable's
+	value- this ends the optional group. This is followed by either the ';'
+	character or the ',' character with optional white-spaces following and a group 
+	containing the rest of the line except for the ';' at the end of the line and 
+	any white-spaces that might precede it.
+	In my program the group that has the rest of the line is interpreted again by
+	only using the b part of the regular expression.
